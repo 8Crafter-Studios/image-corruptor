@@ -1,0 +1,44 @@
+{
+  "name": "image-corruptor",
+  "version": "1.0.0-alpha.1",
+  "description": "8Crafter's Image Corruptor. This CLI/module allows you to add corrupted effects to your images.",
+  "keywords": [
+    "8Crafter",
+    "Image",
+    "Corruptor",
+    "Pixel",
+    "CLI",
+    "Node.js",
+    "Module",
+    "Canvas",
+    "PNG",
+    "JPG",
+    "JPEG"
+  ],
+  "homepage": "https://github.com/8Crafter-Studios/image-corruptor#readme",
+  "bugs": {
+    "url": "https://github.com/8Crafter-Studios/image-corruptor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/8Crafter-Studios/image-corruptor.git"
+  },
+  "license": "MIT",
+  "author": "8Crafter",
+  "type": "module",
+  "main": "./lib/exports.js",
+  "bin": {
+    "image-corruptor": "./bin/image-corruptor.js"
+  },
+  "scripts": {
+    "test": "node ./lib/image-corruptor.js"
+  },
+  "dependencies": {
+    "canvas": "^3.1.0",
+    "progress": "^2.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "@types/progress": "^2.0.7"
+  }
+}
