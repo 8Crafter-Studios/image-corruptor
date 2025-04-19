@@ -1,6 +1,6 @@
 {
   "name": "image-corruptor",
-  "version": "1.0.0-alpha.1.0",
+  "version": "1.0.0-alpha.2",
   "description": "8Crafter's Image Corruptor. This CLI/module allows you to add corrupted effects to your images.",
   "keywords": [
     "8Crafter",
