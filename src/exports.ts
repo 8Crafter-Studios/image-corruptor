@@ -3,7 +3,7 @@ import { Canvas, CanvasRenderingContext2D, createCanvas, Image, loadImage } from
 /**
  * The version of the program.
  */
-export const format_version = "0.1.0-alpha.1";
+export const format_version = "1.0.0-alpha.2";
 
 interface ImageCorruptorOptions {
     /**

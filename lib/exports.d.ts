@@ -1,7 +1,7 @@
 /**
  * The version of the program.
  */
-export declare const format_version = "0.1.0-alpha.1";
+export declare const format_version = "1.0.0-alpha.2";
 interface ImageCorruptorOptions {
     /**
      * The chance of a pixel being replaced.

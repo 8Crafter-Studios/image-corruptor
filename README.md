@@ -75,7 +75,7 @@ import * as fs from "fs";
 console.log(`Version: ${format_version}`);
 
 // Corrupt the image with each pixel having a 50% chance of being corrupted, using the "randomColor" mode, and save it to ../assets/sample_images/corruptedImage-1.png.
-fs.writeFileSync("./assets/sample_images/corruptedImage-1.png", await corruptImage("./assets/test-image.jpg", {
+fs.writeFileSync("./assets/sample_images/corruptedImage-1.png", await corruptImage("./assets/test-image-2.png", {
     ignoreEmptyPixels: false,
     ignoreInvisiblePixels: false,
     replaceChance: 0.5,
@@ -86,7 +86,7 @@ fs.writeFileSync("./assets/sample_images/corruptedImage-1.png", await corruptIma
 // Corrupt the image with each pixel having a 75% chance of being corrupted, using the "randomColorFullBrightness" mode, using the current pixel color as the default color, and save it to ../assets/sample_images/corruptedImage-2.jpg.
 fs.writeFileSync(
     "./assets/sample_images/corruptedImage-2.jpg",
-    await corruptImage("./assets/test-image.jpg", {
+    await corruptImage("./assets/test-image-2.png", {
         ignoreEmptyPixels: false,
         ignoreInvisiblePixels: false,
         replaceChance: 0.75,
@@ -97,11 +97,70 @@ fs.writeFileSync(
         jpegOptions: { chromaSubsampling: true, progressive: true, quality: 1 },
     })
 );
+
+// Corrupt the image with each pixel having a 50% chance of being corrupted, using the "invert" mode, and save it to ../assets/sample_images/corruptedImage-3.png.
+fs.writeFileSync(
+    "./assets/sample_images/corruptedImage-3.png",
+    await corruptImage("./assets/test-image-2.png", {
+        ignoreEmptyPixels: false,
+        ignoreInvisiblePixels: false,
+        replaceChance: 0.5,
+        preserveAlpha: false,
+        mode: "invert",
+        format: "png",
+    })
+);
+
+// Corrupt the image with each pixel having a 10% chance of being corrupted, using a random mode for each pixel, and save it to ../assets/sample_images/corruptedImage-4.png.
+fs.writeFileSync(
+    "./assets/sample_images/corruptedImage-4.png",
+    await corruptImage("./assets/test-image-2.png", {
+        ignoreEmptyPixels: false,
+        ignoreInvisiblePixels: false,
+        replaceChance: 0.1,
+        preserveAlpha: false,
+        mode: "random",
+        useCurrentColorAsDefault: false,
+        format: "png",
+    })
+);
+
+// Corrupt the image with each pixel having a 40% chance of being corrupted, using the "erase" model, and save it to ../assets/sample_images/corruptedImage-5.png.
+fs.writeFileSync(
+    "./assets/sample_images/corruptedImage-5.png",
+    await corruptImage("./assets/test-image-2.png", {
+        ignoreEmptyPixels: false,
+        ignoreInvisiblePixels: false,
+        replaceChance: 0.4,
+        preserveAlpha: false,
+        mode: "erase",
+        useCurrentColorAsDefault: false,
+        format: "png",
+    })
+);
+
+// Corrupt the image with each pixel having a 60% chance of being corrupted, using the "randomColorFullBrightnessBlueChannel" model, and save it to ../assets/sample_images/corruptedImage-6.png.
+fs.writeFileSync(
+    "./assets/sample_images/corruptedImage-6.png",
+    await corruptImage("./assets/test-image-2.png", {
+        ignoreEmptyPixels: false,
+        ignoreInvisiblePixels: false,
+        replaceChance: 0.6,
+        preserveAlpha: false,
+        mode: "randomColorFullBrightnessBlueChannel",
+        useCurrentColorAsDefault: false,
+        format: "png",
+    })
+);
 ```
 
 ## Sample Images
 
 ![Sample Image 1](./assets/sample_images/corruptedImage-1.png)
 ![Sample Image 2](./assets/sample_images/corruptedImage-2.jpg)
-<!-- ![Sample Image 3](./assets/sample_images/corruptedImage-3.pdf) -->
-<!-- ![Sample Image 4](./assets/sample_images/corruptedImage-4.svg) -->
+![Sample Image 3](./assets/sample_images/corruptedImage-3.png)
+![Sample Image 4](./assets/sample_images/corruptedImage-4.png)
+![Sample Image 5](./assets/sample_images/corruptedImage-5.png)
+![Sample Image 6](./assets/sample_images/corruptedImage-6.png)
+<!-- ![Sample Image 5](./assets/sample_images/corruptedImage-5.pdf) -->
+<!-- ![Sample Image 6](./assets/sample_images/corruptedImage-6.svg) -->
