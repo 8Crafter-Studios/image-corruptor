@@ -1,7 +1,7 @@
 /**
  * The version of the program.
  */
-export declare const format_version = "1.0.0-alpha.2";
+export declare const format_version = "1.0.0-alpha.4";
 interface ImageCorruptorOptions {
     /**
      * The chance of a pixel being replaced.
@@ -58,7 +58,9 @@ interface ImageCorruptorOptions {
      */
     ignoreInvisiblePixels?: boolean;
     /**
-     * The X and Y scales of the image.
+     * The X and Y scales of the pixels, this specifies the size of each pixel,
+     * setting this to a larger value may reduce file size, this will not affect
+     * the width or height of the image. If not provided, the scales will both be 1.
      *
      * @type {[x?: number | undefined, y?: number | undefined]}
      *

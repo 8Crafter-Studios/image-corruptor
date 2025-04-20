@@ -7,7 +7,7 @@ import { nonRandomModes } from "./exports.js";
 /**
  * The version of the program.
  */
-const format_version = "1.0.0-alpha.3";
+const format_version = "1.0.0-alpha.4";
 
 /**
  * The arguments passed to the CLI.
