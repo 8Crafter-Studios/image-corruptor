@@ -7,7 +7,7 @@
 [![NPM License](https://img.shields.io/npm/l/image-corruptor)](https://npmjs.com/package/image-corruptor)
 [![NPM Last Update](https://img.shields.io/npm/last-update/image-corruptor)](https://npmjs.com/package/image-corruptor)
 [![NPM Unpacked Size](https://img.shields.io/npm/unpacked-size/image-corruptor)](https://npmjs.com/package/image-corruptor)
-[![GitHub last commit](https://img.shields.io/github/last-commit/8Crafter-Studios/random-image-generator)](https://github.com/8Crafter-Studios/random-image-generator/commits/main)
+[![GitHub last commit](https://img.shields.io/github/last-commit/8Crafter-Studios/image-corruptor)](https://github.com/8Crafter-Studios/image-corruptor/commits/main)
 [![Discord](https://img.shields.io/discord/1213197616570048512?logo=discord&label=discord&link=https%3A%2F%2Fdiscord.gg%2FjrCTeHGuhx)](https://discord.gg/jrCTeHGuhx)
 
 This Node.js program generates images by setting each pixel to a randomly colored pixel.
