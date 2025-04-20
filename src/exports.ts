@@ -3,7 +3,7 @@ import { Canvas, CanvasRenderingContext2D, createCanvas, Image, loadImage } from
 /**
  * The version of the program.
  */
-export const format_version = "1.0.0-alpha.2";
+export const format_version = "1.0.0-alpha.3";
 
 interface ImageCorruptorOptions {
     /**
@@ -62,7 +62,9 @@ interface ImageCorruptorOptions {
     ignoreInvisiblePixels?: boolean;
 
     /**
-     * The X and Y scales of the image.
+     * The X and Y scales of the pixels, this specifies the size of each pixel,
+     * setting this to a larger value may reduce file size, this will not affect
+     * the width or height of the image. If not provided, the scales will both be 1.
      *
      * @type {[x?: number | undefined, y?: number | undefined]}
      *
@@ -461,7 +463,9 @@ export async function corruptImage(src: string | Buffer, options: ImageCorruptor
             break;
         }
         case undefined: {
-            console.warn("WARNING!: Using the SVG format should currently be avoided as there is a bug where it makes the SVG image EXRTEMELY large (as in 100 MiB as opposed to 2 MiB).");
+            console.warn(
+                "WARNING!: Using the SVG format should currently be avoided as there is a bug where it makes the SVG image EXRTEMELY large (as in 100 MiB as opposed to 2 MiB)."
+            );
             buffer = canvas.toBuffer();
             break;
         }

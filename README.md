@@ -31,7 +31,7 @@ image-corruptor --help                                                          
 
 Options:
   -o, --out=<directory>             The directory to place the corrupted images in. Default is "./corruptedImages".
-  -s, --scale=<scale>               The scale of the pixels, this specifies the size of each pixel, this will not affect the width or height of the image. If not provided, the scale will be 1. Format should be "scaleX:scaleY" or "scale".
+  -s, --scale=<scale>               The scale of the pixels, this specifies the size of each pixel corruption, settings this to 4 would make each corruption apply to a 4x4 pixel area, setting this to a larger value may reduce file size, this will not affect the width or height of the image. If not provided, the scale will be 1. Format should be "scaleX:scaleY" or "scale".
   -rc, --replace-chance=<chance>    Set the chance of replacing a pixel with a random pixel, should be a float between 0 and 1 (inclusive). Default is 0.1.
   -ie, --ignore-empty               Do not corrupt pixels that have all channels set to 0.
   -ii, --ignore-invisible           Do not corrupt pixels that have the alpha channel set to 0.
