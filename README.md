@@ -1,6 +1,6 @@
 # 8Crafter's Image Corruptor
 
-<!-- ![Thumbnail](./assets/thumbnail.png) -->
+![Thumbnail](./assets/thumbnail.png)
 
 [![NPM Downloads](https://img.shields.io/npm/d18m/image-corruptor)](https://npmjs.com/package/image-corruptor)
 [![NPM Version](https://img.shields.io/npm/v/image-corruptor)](https://npmjs.com/package/image-corruptor)
@@ -31,6 +31,7 @@ image-corruptor --help                                                          
 
 Options:
   -o, --out=<directory>             The directory to place the corrupted images in. Default is "./corruptedImages".
+  -s, --scale=<scale>               The scale of the pixels, this specifies the size of each pixel, this will not affect the width or height of the image. If not provided, the scale will be 1. Format should be "scaleX:scaleY" or "scale".
   -rc, --replace-chance=<chance>    Set the chance of replacing a pixel with a random pixel, should be a float between 0 and 1 (inclusive). Default is 0.1.
   -ie, --ignore-empty               Do not corrupt pixels that have all channels set to 0.
   -ii, --ignore-invisible           Do not corrupt pixels that have the alpha channel set to 0.

@@ -60,6 +60,18 @@ interface ImageCorruptorOptions {
      * @default false
      */
     ignoreInvisiblePixels?: boolean;
+
+    /**
+     * The X and Y scales of the image.
+     *
+     * @type {[x?: number | undefined, y?: number | undefined]}
+     *
+     * @default
+     * ```js
+     * [1, 1]
+     * ```
+     */
+    scale?: [x?: number | undefined, y?: number | undefined];
     /**
      * The mode to use.
      *
@@ -166,6 +178,36 @@ export async function corruptImage(src: string | Buffer, options: ImageCorruptor
      */
     const srcImg: Image = await loadImage(src);
 
+    /**
+     * The X scale of the image.
+     *
+     * Get the value from the third non-flag argument.
+     *
+     * @type {number}
+     */
+    const scaleX: number = options.scale?.[0] ?? 1;
+
+    /**
+     * The Y scale of the image.
+     *
+     * Get the value from the third non-flag argument.
+     *
+     * @type {number}
+     */
+    const scaleY: number = options.scale?.[1] ?? 1;
+
+    // Check if the X scale is at least 1.
+    if (scaleX < 1) {
+        console.error("\u001B[38;2;255;0;0mInvalid X scale, must be at least 1. Use the --help or -h option to see the usage.\u001B[0m");
+        process.exit(1);
+    }
+
+    // Check if the Y scale is at least 1.
+    if (scaleY < 1) {
+        console.error("\u001B[38;2;255;0;0mInvalid Y scale, must be at least 1. Use the --help or -h option to see the usage.\u001B[0m");
+        process.exit(1);
+    }
+
     // Instantiate the canvas object
     /**
      * The canvas object.
@@ -225,8 +267,8 @@ export async function corruptImage(src: string | Buffer, options: ImageCorruptor
                     const g: number = Math.floor(Math.random() * 256);
                     const b: number = Math.floor(Math.random() * 256);
                     context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
-                    context.clearRect(x, y, 1, 1);
-                    context.fillRect(x, y, 1, 1);
+                    context.clearRect(x, y, scaleX, scaleY);
+                    context.fillRect(x, y, scaleX, scaleY);
                     break;
                 }
                 case "randomColorFullBrightness": {
@@ -234,8 +276,8 @@ export async function corruptImage(src: string | Buffer, options: ImageCorruptor
                     const g: number = Math.random() < 0.5 ? (options.useCurrentColorAsDefault ?? false ? data[1] : 0) : 255;
                     const b: number = Math.random() < 0.5 ? (options.useCurrentColorAsDefault ?? false ? data[2] : 0) : 255;
                     context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
-                    context.clearRect(x, y, 1, 1);
-                    context.fillRect(x, y, 1, 1);
+                    context.clearRect(x, y, scaleX, scaleY);
+                    context.fillRect(x, y, scaleX, scaleY);
                     break;
                 }
                 case "randomColorFullBrightnessOneChannel": {
@@ -257,8 +299,8 @@ export async function corruptImage(src: string | Buffer, options: ImageCorruptor
                         }
                     }
                     context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
-                    context.clearRect(x, y, 1, 1);
-                    context.fillRect(x, y, 1, 1);
+                    context.clearRect(x, y, scaleX, scaleY);
+                    context.fillRect(x, y, scaleX, scaleY);
                     break;
                 }
                 case "randomColorFullBrightnessOneOrTwoChannels": {
@@ -300,8 +342,8 @@ export async function corruptImage(src: string | Buffer, options: ImageCorruptor
                         }
                     }
                     context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
-                    context.clearRect(x, y, 1, 1);
-                    context.fillRect(x, y, 1, 1);
+                    context.clearRect(x, y, scaleX, scaleY);
+                    context.fillRect(x, y, scaleX, scaleY);
                     break;
                 }
                 case "randomColorFullBrightnessTwoChannels":
@@ -327,8 +369,8 @@ export async function corruptImage(src: string | Buffer, options: ImageCorruptor
                             }
                         }
                         context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
-                        context.clearRect(x, y, 1, 1);
-                        context.fillRect(x, y, 1, 1);
+                        context.clearRect(x, y, scaleX, scaleY);
+                        context.fillRect(x, y, scaleX, scaleY);
                     }
                     break;
                 case "randomColorFullBrightnessRedChannel": {
@@ -336,8 +378,8 @@ export async function corruptImage(src: string | Buffer, options: ImageCorruptor
                     const g: number = data[1];
                     const b: number = data[2];
                     context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
-                    context.clearRect(x, y, 1, 1);
-                    context.fillRect(x, y, 1, 1);
+                    context.clearRect(x, y, scaleX, scaleY);
+                    context.fillRect(x, y, scaleX, scaleY);
                     break;
                 }
                 case "randomColorFullBrightnessGreenChannel": {
@@ -345,8 +387,8 @@ export async function corruptImage(src: string | Buffer, options: ImageCorruptor
                     const g: number = 255;
                     const b: number = data[2];
                     context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
-                    context.clearRect(x, y, 1, 1);
-                    context.fillRect(x, y, 1, 1);
+                    context.clearRect(x, y, scaleX, scaleY);
+                    context.fillRect(x, y, scaleX, scaleY);
                     break;
                 }
                 case "randomColorFullBrightnessBlueChannel": {
@@ -354,30 +396,30 @@ export async function corruptImage(src: string | Buffer, options: ImageCorruptor
                     const g: number = data[1];
                     const b: number = 255;
                     context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
-                    context.clearRect(x, y, 1, 1);
-                    context.fillRect(x, y, 1, 1);
+                    context.clearRect(x, y, scaleX, scaleY);
+                    context.fillRect(x, y, scaleX, scaleY);
                     break;
                 }
                 case "setToWhite": {
                     context.fillStyle = `rgba(255,255,255,${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
-                    context.clearRect(x, y, 1, 1);
-                    context.fillRect(x, y, 1, 1);
+                    context.clearRect(x, y, scaleX, scaleY);
+                    context.fillRect(x, y, scaleX, scaleY);
                     break;
                 }
                 case "setToBlack": {
                     context.fillStyle = `rgba(0,0,0,${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
-                    context.clearRect(x, y, 1, 1);
-                    context.fillRect(x, y, 1, 1);
+                    context.clearRect(x, y, scaleX, scaleY);
+                    context.fillRect(x, y, scaleX, scaleY);
                     break;
                 }
                 case "erase": {
-                    context.clearRect(x, y, 1, 1);
+                    context.clearRect(x, y, scaleX, scaleY);
                     break;
                 }
                 case "invert": {
                     context.fillStyle = `rgba(${255 - data[0]},${255 - data[1]},${255 - data[2]},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
-                    context.clearRect(x, y, 1, 1);
-                    context.fillRect(x, y, 1, 1);
+                    context.clearRect(x, y, scaleX, scaleY);
+                    context.fillRect(x, y, scaleX, scaleY);
                     break;
                 }
             }

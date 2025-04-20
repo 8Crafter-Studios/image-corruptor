@@ -2,7 +2,7 @@ import { Canvas, CanvasRenderingContext2D, createCanvas, Image, loadImage } from
 import * as fs from "fs";
 import path from "path";
 import ProgressBar from "progress";
-import { nonRandomModes } from "./exports";
+import { nonRandomModes } from "./exports.js";
 
 /**
  * The version of the program.
@@ -36,7 +36,7 @@ switch (args[0]?.toLowerCase()) {
     case "help":
         helpCommand();
         break;
-    case "generate":
+    case "corrupt":
         await corruptCommand();
         break;
     case undefined:
@@ -59,6 +59,7 @@ image-corruptor --help                                                          
 
 Options:
   -o, --out=<directory>             The directory to place the corrupted images in. Default is "./corruptedImages".
+  -s, --scale=<scale>               The scale of the pixels, this specifies the size of each pixel, this will not affect the width or height of the image. If not provided, the scale will be 1. Format should be "scaleX:scaleY" or "scale".
   -rc, --replace-chance=<chance>    Set the chance of replacing a pixel with a random pixel, should be a float between 0 and 1 (inclusive). Default is 0.1.
   -ie, --ignore-empty               Do not corrupt pixels that have all channels set to 0.
   -ii, --ignore-invisible           Do not corrupt pixels that have the alpha channel set to 0.
@@ -119,6 +120,34 @@ async function corruptCommand() {
         format = "image/jpeg";
     }
 
+    const rawScale: string = args.find((arg) => arg.startsWith("-s=") || arg.startsWith("--scale="))?.split("=")[1] ?? "1";
+
+    /**
+     * The X scale of the image.
+     *
+     * @type {number}
+     */
+    const scaleX: number = /^[0-9]+$/.test(rawScale) ? Number(rawScale) : Number(rawScale.match(/^x?([0-9]+)[:,\\\/;\-&|xy]([0-9]+)y?$/)?.[1] ?? 1);
+
+    /**
+     * The Y scale of the image.
+     *
+     * @type {number}
+     */
+    const scaleY: number = /^[0-9]+$/.test(rawScale) ? Number(rawScale) : Number(rawScale.match(/^x?[0-9]+[:,\\\/;\-&|xy]([0-9]+)y?$/)?.[1] ?? 1);
+
+    // Check if the X scale is at least 1.
+    if (scaleX < 1) {
+        console.error("\u001B[38;2;255;0;0mInvalid X scale, must be at least 1. Use the --help or -h option to see the usage.\u001B[0m");
+        process.exit(1);
+    }
+
+    // Check if the Y scale is at least 1.
+    if (scaleY < 1) {
+        console.error("\u001B[38;2;255;0;0mInvalid Y scale, must be at least 1. Use the --help or -h option to see the usage.\u001B[0m");
+        process.exit(1);
+    }
+
     // Configuration
     /**
      * The glob patterns for the source images to corrupt.
@@ -171,9 +200,9 @@ async function corruptCommand() {
      *
      * @type {string}
      *
-     * @default "./"
+     * @default "./corruptedImages"
      */
-    const outDir: string = args.find((arg) => arg.startsWith("-o=") || arg.startsWith("--out="))?.split("=")[1] ?? "./";
+    const outDir: string = args.find((arg) => arg.startsWith("-o=") || arg.startsWith("--out="))?.split("=")[1] ?? "./corruptedImages";
     /**
      * The chance of a pixel being replaced.
      *
@@ -263,7 +292,8 @@ async function corruptCommand() {
         | "setToWhite"
         | "setToBlack"
         | "invert"
-        | "random" = "randomColor";
+        | "random" =
+        (args.find((arg) => arg.startsWith("-m=") || arg.startsWith("--mode="))?.split("=")[1] as (typeof nonRandomModes)[number]) ?? "randomColor";
 
     /**
      * The working directory to use for globbing.
@@ -330,8 +360,8 @@ async function corruptCommand() {
         context.imageSmoothingEnabled = false;
         context.drawImage(srcImg, 0, 0);
 
-        for (let x = 0; x < srcImg.width; x++) {
-            for (let y = 0; y < srcImg.height; y++) {
+        for (let x = 0; x < srcImg.width; x += scaleX) {
+            for (let y = 0; y < srcImg.height; y += scaleY) {
                 /**
                  * The data of the pixel.
                  *
@@ -353,8 +383,8 @@ async function corruptCommand() {
                         const g: number = Math.floor(Math.random() * 256);
                         const b: number = Math.floor(Math.random() * 256);
                         context.fillStyle = `rgba(${r},${g},${b},${preserveAlpha ? data[3] / 255 : 1})`;
-                        context.clearRect(x, y, 1, 1);
-                        context.fillRect(x, y, 1, 1);
+                        context.clearRect(x, y, scaleX, scaleY);
+                        context.fillRect(x, y, scaleX, scaleY);
                         break;
                     }
                     case "randomColorFullBrightness": {
@@ -362,8 +392,8 @@ async function corruptCommand() {
                         const g: number = Math.random() < 0.5 ? (useCurrentColorAsDefault ? data[1] : 0) : 255;
                         const b: number = Math.random() < 0.5 ? (useCurrentColorAsDefault ? data[2] : 0) : 255;
                         context.fillStyle = `rgba(${r},${g},${b},${preserveAlpha ? data[3] / 255 : 1})`;
-                        context.clearRect(x, y, 1, 1);
-                        context.fillRect(x, y, 1, 1);
+                        context.clearRect(x, y, scaleX, scaleY);
+                        context.fillRect(x, y, scaleX, scaleY);
                         break;
                     }
                     case "randomColorFullBrightnessOneChannel": {
@@ -385,8 +415,8 @@ async function corruptCommand() {
                             }
                         }
                         context.fillStyle = `rgba(${r},${g},${b},${preserveAlpha ? data[3] / 255 : 1})`;
-                        context.clearRect(x, y, 1, 1);
-                        context.fillRect(x, y, 1, 1);
+                        context.clearRect(x, y, scaleX, scaleY);
+                        context.fillRect(x, y, scaleX, scaleY);
                         break;
                     }
                     case "randomColorFullBrightnessOneOrTwoChannels": {
@@ -428,8 +458,8 @@ async function corruptCommand() {
                             }
                         }
                         context.fillStyle = `rgba(${r},${g},${b},${preserveAlpha ? data[3] / 255 : 1})`;
-                        context.clearRect(x, y, 1, 1);
-                        context.fillRect(x, y, 1, 1);
+                        context.clearRect(x, y, scaleX, scaleY);
+                        context.fillRect(x, y, scaleX, scaleY);
                         break;
                     }
                     case "randomColorFullBrightnessTwoChannels":
@@ -455,8 +485,8 @@ async function corruptCommand() {
                                 }
                             }
                             context.fillStyle = `rgba(${r},${g},${b},${preserveAlpha ? data[3] / 255 : 1})`;
-                            context.clearRect(x, y, 1, 1);
-                            context.fillRect(x, y, 1, 1);
+                            context.clearRect(x, y, scaleX, scaleY);
+                            context.fillRect(x, y, scaleX, scaleY);
                         }
                         break;
                     case "randomColorFullBrightnessRedChannel": {
@@ -464,8 +494,8 @@ async function corruptCommand() {
                         const g: number = data[1];
                         const b: number = data[2];
                         context.fillStyle = `rgba(${r},${g},${b},${preserveAlpha ? data[3] / 255 : 1})`;
-                        context.clearRect(x, y, 1, 1);
-                        context.fillRect(x, y, 1, 1);
+                        context.clearRect(x, y, scaleX, scaleY);
+                        context.fillRect(x, y, scaleX, scaleY);
                         break;
                     }
                     case "randomColorFullBrightnessGreenChannel": {
@@ -473,8 +503,8 @@ async function corruptCommand() {
                         const g: number = 255;
                         const b: number = data[2];
                         context.fillStyle = `rgba(${r},${g},${b},${preserveAlpha ? data[3] / 255 : 1})`;
-                        context.clearRect(x, y, 1, 1);
-                        context.fillRect(x, y, 1, 1);
+                        context.clearRect(x, y, scaleX, scaleY);
+                        context.fillRect(x, y, scaleX, scaleY);
                         break;
                     }
                     case "randomColorFullBrightnessBlueChannel": {
@@ -482,30 +512,30 @@ async function corruptCommand() {
                         const g: number = data[1];
                         const b: number = 255;
                         context.fillStyle = `rgba(${r},${g},${b},${preserveAlpha ? data[3] / 255 : 1})`;
-                        context.clearRect(x, y, 1, 1);
-                        context.fillRect(x, y, 1, 1);
+                        context.clearRect(x, y, scaleX, scaleY);
+                        context.fillRect(x, y, scaleX, scaleY);
                         break;
                     }
                     case "setToWhite": {
                         context.fillStyle = `rgba(255,255,255,${preserveAlpha ? data[3] / 255 : 1})`;
-                        context.clearRect(x, y, 1, 1);
-                        context.fillRect(x, y, 1, 1);
+                        context.clearRect(x, y, scaleX, scaleY);
+                        context.fillRect(x, y, scaleX, scaleY);
                         break;
                     }
                     case "setToBlack": {
                         context.fillStyle = `rgba(0,0,0,${preserveAlpha ? data[3] / 255 : 1})`;
-                        context.clearRect(x, y, 1, 1);
-                        context.fillRect(x, y, 1, 1);
+                        context.clearRect(x, y, scaleX, scaleY);
+                        context.fillRect(x, y, scaleX, scaleY);
                         break;
                     }
                     case "erase": {
-                        context.clearRect(x, y, 1, 1);
+                        context.clearRect(x, y, scaleX, scaleY);
                         break;
                     }
                     case "invert": {
                         context.fillStyle = `rgba(${255 - data[0]},${255 - data[1]},${255 - data[2]},${preserveAlpha ? data[3] / 255 : 1})`;
-                        context.clearRect(x, y, 1, 1);
-                        context.fillRect(x, y, 1, 1);
+                        context.clearRect(x, y, scaleX, scaleY);
+                        context.fillRect(x, y, scaleX, scaleY);
                         break;
                     }
                 }
@@ -539,8 +569,8 @@ async function corruptCommand() {
         switch (format) {
             case "application/pdf":
                 throw new Error("PDF support has been disabled due to it causing hangs.");
-                // buffer = canvas.toBuffer(format);
-                // break;
+            // buffer = canvas.toBuffer(format);
+            // break;
             case "image/png":
                 buffer = canvas.toBuffer(format);
                 break;
@@ -552,7 +582,9 @@ async function corruptCommand() {
                 });
                 break;
             case undefined:
-                console.warn("WARNING!: Using the SVG format should currently be avoided as there is a bug where it makes the SVG image EXRTEMELY large (as in 100 MiB as opposed to 2 MiB).");
+                console.warn(
+                    "WARNING!: Using the SVG format should currently be avoided as there is a bug where it makes the SVG image EXRTEMELY large (as in 100 MiB as opposed to 2 MiB)."
+                );
                 buffer = canvas.toBuffer();
                 break;
             default:

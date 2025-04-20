@@ -58,6 +58,17 @@ interface ImageCorruptorOptions {
      */
     ignoreInvisiblePixels?: boolean;
     /**
+     * The X and Y scales of the image.
+     *
+     * @type {[x?: number | undefined, y?: number | undefined]}
+     *
+     * @default
+     * ```js
+     * [1, 1]
+     * ```
+     */
+    scale?: [x?: number | undefined, y?: number | undefined];
+    /**
      * The mode to use.
      *
      * Options:
