@@ -31,7 +31,7 @@ image-corruptor --help                                                          
 
 Options:
   -o, --out=<directory>             The directory to place the corrupted images in. Default is "./corruptedImages".
-  -s, --scale=<scale>               The scale of the pixels, this specifies the size of each pixel corruption, settings this to 4 would make each corruption apply to a 4x4 pixel area, setting this to a larger value may reduce file size, this will not affect the width or height of the image. If not provided, the scale will be 1. Format should be "scaleX:scaleY" or "scale".
+  -s, --scale=<scale>               The scale of the pixels, this specifies the size of each pixel, setting this to a larger value may reduce file size, this will not affect the width or height of the image. If not provided, the scale will be 1. Format should be "scaleX:scaleY" or "scale".
   -rc, --replace-chance=<chance>    Set the chance of replacing a pixel with a random pixel, should be a float between 0 and 1 (inclusive). Default is 0.1.
   -ie, --ignore-empty               Do not corrupt pixels that have all channels set to 0.
   -ii, --ignore-invisible           Do not corrupt pixels that have the alpha channel set to 0.
@@ -44,6 +44,9 @@ Options:
   --chroma-subsampling              Enable chroma subsampling for JPEG images.
   --progressive                     Enable progressive encoding for JPEG images.
   --quality=<quality>               Set the quality of the JPEG image, should be a float between 0 and 1 (inclusive). Default is 0.75.
+  -dc, --df-contrast=<contrast>     The contrast to use for "deepfry" mode. Should be a float, there are no range restrictions. Default is 0.5.
+  -dqd, --df-qual-dmg=<qualityDmg>  How many times to convert the image to a really low quality JPEG for "deepfry" mode, should be an integer greater than or equal to 0. Default is 10.
+  -dq, --df-qual=<quality>          The quality to use for converting the image to a really low quality JPEG for "deepfry" mode, should be a float between 0 and 1 (inclusive). Default is 0.25.
 
 Paramters:
 [globDir]                       The directory to search for source images that match the glob pattern. Default is "./".
@@ -63,6 +66,7 @@ erase - Erases the pixel.
 setToWhite - Replaces the pixel with white.
 setToBlack - Replaces the pixel with black.
 invert - Inverts the pixel.
+deepfry - Deepfries the entire image. This increases contrast and lowers the quality of the image, resulting in the "deep fried" effect.
 random - Uses a random mode for each pixel.
 ```
 

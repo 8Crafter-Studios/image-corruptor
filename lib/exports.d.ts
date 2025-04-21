@@ -2,7 +2,7 @@ import { ImageData } from "canvas";
 /**
  * The version of the program.
  */
-export declare const format_version = "1.0.0-alpha.4";
+export declare const format_version = "1.0.0-alpha.5";
 interface ImageCorruptorOptions {
     /**
      * The chance of a pixel being replaced.
@@ -84,6 +84,45 @@ interface ImageCorruptorOptions {
      * ```
      */
     scale?: [x?: number | undefined, y?: number | undefined];
+    /**
+     * The contrast to use for "deepfry" mode. Should be a float, there are no range restrictions.
+     *
+     * A higher number will result in a more deepfried image.
+     *
+     * Only applies to the following modes:
+     * - `deepfry`
+     *
+     * @type {number}
+     *
+     * @default 0.5
+     */
+    deepfryContrast?: number;
+    /**
+     * How many times to convert the image to a really low quality JPEG for "deepfry" mode, should be an integer greater than or equal to 0.
+     *
+     * A higher number will result in a more deepfried image.
+     *
+     * Only applies to the following modes:
+     * - `deepfry`
+     *
+     * @type {number}
+     *
+     * @default 10
+     */
+    deepfryQualityDamage?: number;
+    /**
+     * The quality to use for converting the image to a really low quality JPEG for "deepfry" mode, should be a float between 0 and 1 (inclusive).
+     *
+     * A lower number will result in a more deepfried image.
+     *
+     * Only applies to the following modes:
+     * - `deepfry`
+     *
+     * @type {number}
+     *
+     * @default 0.25
+     */
+    deepfryDamagingQuality?: number;
     /**
      * The mode to use.
      *
