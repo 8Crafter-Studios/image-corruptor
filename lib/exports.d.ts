@@ -1,3 +1,4 @@
+import { ImageData } from "canvas";
 /**
  * The version of the program.
  */
@@ -7,6 +8,9 @@ interface ImageCorruptorOptions {
      * The chance of a pixel being replaced.
      *
      * Must be between 0 and 1 (inclusive)
+     *
+     * Does not apply to the following modes:
+     * - `deepfry`
      *
      * @type {number}
      *
@@ -35,6 +39,7 @@ interface ImageCorruptorOptions {
      * - `erase`
      * - `setToWhite`
      * - `setToBlack`
+     * - `deepfry`
      *
      * @type {boolean}
      *
@@ -44,6 +49,9 @@ interface ImageCorruptorOptions {
     /**
      * If true, then pixels with all channels being 0 are not courrupted.
      *
+     * Does not apply to the following modes:
+     * - `deepfry`
+     *
      * @type {boolean}
      *
      * @default false
@@ -51,6 +59,9 @@ interface ImageCorruptorOptions {
     ignoreEmptyPixels?: boolean;
     /**
      * If true, then pixels with an alpha channel of 0 are not courrupted.
+     *
+     * Does not apply to the following modes:
+     * - `deepfry
      *
      * @type {boolean}
      *
@@ -61,6 +72,9 @@ interface ImageCorruptorOptions {
      * The X and Y scales of the pixels, this specifies the size of each pixel,
      * setting this to a larger value may reduce file size, this will not affect
      * the width or height of the image. If not provided, the scales will both be 1.
+     *
+     * Does not apply to the following modes:
+     * - `deepfry
      *
      * @type {[x?: number | undefined, y?: number | undefined]}
      *
@@ -86,13 +100,14 @@ interface ImageCorruptorOptions {
      * - `setToWhite` - Replaces the pixel with white.
      * - `setToBlack` - Replaces the pixel with black.
      * - `invert` - Inverts the pixel.
+     * - `deepfry` - Deepfries the entire image. This increases contrast and lowers the quality of the image, resulting in the "deep fried" effect.
      * - `random` - Uses a random mode for each pixel.
      *
-     * @type {"randomColor" | "randomColorFullBrightness" | "randomColorFullBrightnessOneChannel" | "randomColorFullBrightnessOneOrTwoChannels" | "randomColorFullBrightnessTwoChannels" | "randomColorFullBrightnessRedChannel" | "randomColorFullBrightnessGreenChannel" | "randomColorFullBrightnessBlueChannel" | "erase" | "setToWhite" | "setToBlack" | "invert" | "random"}
+     * @type {"randomColor" | "randomColorFullBrightness" | "randomColorFullBrightnessOneChannel" | "randomColorFullBrightnessOneOrTwoChannels" | "randomColorFullBrightnessTwoChannels" | "randomColorFullBrightnessRedChannel" | "randomColorFullBrightnessGreenChannel" | "randomColorFullBrightnessBlueChannel" | "erase" | "setToWhite" | "setToBlack" | "invert" | "deepfry" | "random"}
      *
      * @default "randomColor"
      */
-    mode?: "randomColor" | "randomColorFullBrightness" | "randomColorFullBrightnessOneChannel" | "randomColorFullBrightnessOneOrTwoChannels" | "randomColorFullBrightnessTwoChannels" | "randomColorFullBrightnessRedChannel" | "randomColorFullBrightnessGreenChannel" | "randomColorFullBrightnessBlueChannel" | "erase" | "setToWhite" | "setToBlack" | "invert" | "random";
+    mode?: "randomColor" | "randomColorFullBrightness" | "randomColorFullBrightnessOneChannel" | "randomColorFullBrightnessOneOrTwoChannels" | "randomColorFullBrightnessTwoChannels" | "randomColorFullBrightnessRedChannel" | "randomColorFullBrightnessGreenChannel" | "randomColorFullBrightnessBlueChannel" | "erase" | "setToWhite" | "setToBlack" | "invert" | "deepfry" | "random";
     /**
      * The format for the output image.
      *
@@ -131,7 +146,17 @@ interface ImageCorruptorOptions {
 /**
  * The list of valid modes that are not `random`.
  */
-export declare const nonRandomModes: readonly ["randomColor", "randomColorFullBrightness", "randomColorFullBrightnessOneChannel", "randomColorFullBrightnessOneOrTwoChannels", "randomColorFullBrightnessTwoChannels", "erase", "setToWhite", "setToBlack", "invert"];
+export declare const nonRandomModes: readonly ["randomColor", "randomColorFullBrightness", "randomColorFullBrightnessOneChannel", "randomColorFullBrightnessOneOrTwoChannels", "randomColorFullBrightnessTwoChannels", "erase", "setToWhite", "setToBlack", "invert", "deepfry"];
+/**
+ * Applies a contrast effect to the image data.
+ *
+ * @param {ImageData} imageData The image data.
+ * @param {number} val The value to apply, must be between 0 and 1 (inclusive).
+ * @returns {ImageData} The image data with the contrast applied.
+ *
+ * @see {@link https://stackoverflow.com/a/79557593} This is the source of this function.
+ */
+export declare function applyContrast(imageData: ImageData, val: number): ImageData;
 /**
  * Corrupts an image.
  *

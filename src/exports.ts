@@ -1,4 +1,4 @@
-import { Canvas, CanvasRenderingContext2D, createCanvas, Image, loadImage } from "canvas";
+import { Canvas, CanvasRenderingContext2D, createCanvas, Image, ImageData, loadImage } from "canvas";
 
 /**
  * The version of the program.
@@ -10,6 +10,9 @@ interface ImageCorruptorOptions {
      * The chance of a pixel being replaced.
      *
      * Must be between 0 and 1 (inclusive)
+     * 
+     * Does not apply to the following modes:
+     * - `deepfry`
      *
      * @type {number}
      *
@@ -38,6 +41,7 @@ interface ImageCorruptorOptions {
      * - `erase`
      * - `setToWhite`
      * - `setToBlack`
+     * - `deepfry`
      *
      * @type {boolean}
      *
@@ -47,6 +51,9 @@ interface ImageCorruptorOptions {
     /**
      * If true, then pixels with all channels being 0 are not courrupted.
      *
+     * Does not apply to the following modes:
+     * - `deepfry`
+     *
      * @type {boolean}
      *
      * @default false
@@ -54,6 +61,9 @@ interface ImageCorruptorOptions {
     ignoreEmptyPixels?: boolean;
     /**
      * If true, then pixels with an alpha channel of 0 are not courrupted.
+     *
+     * Does not apply to the following modes:
+     * - `deepfry
      *
      * @type {boolean}
      *
@@ -65,6 +75,9 @@ interface ImageCorruptorOptions {
      * The X and Y scales of the pixels, this specifies the size of each pixel,
      * setting this to a larger value may reduce file size, this will not affect
      * the width or height of the image. If not provided, the scales will both be 1.
+     *
+     * Does not apply to the following modes:
+     * - `deepfry
      *
      * @type {[x?: number | undefined, y?: number | undefined]}
      *
@@ -90,9 +103,10 @@ interface ImageCorruptorOptions {
      * - `setToWhite` - Replaces the pixel with white.
      * - `setToBlack` - Replaces the pixel with black.
      * - `invert` - Inverts the pixel.
+     * - `deepfry` - Deepfries the entire image. This increases contrast and lowers the quality of the image, resulting in the "deep fried" effect.
      * - `random` - Uses a random mode for each pixel.
      *
-     * @type {"randomColor" | "randomColorFullBrightness" | "randomColorFullBrightnessOneChannel" | "randomColorFullBrightnessOneOrTwoChannels" | "randomColorFullBrightnessTwoChannels" | "randomColorFullBrightnessRedChannel" | "randomColorFullBrightnessGreenChannel" | "randomColorFullBrightnessBlueChannel" | "erase" | "setToWhite" | "setToBlack" | "invert" | "random"}
+     * @type {"randomColor" | "randomColorFullBrightness" | "randomColorFullBrightnessOneChannel" | "randomColorFullBrightnessOneOrTwoChannels" | "randomColorFullBrightnessTwoChannels" | "randomColorFullBrightnessRedChannel" | "randomColorFullBrightnessGreenChannel" | "randomColorFullBrightnessBlueChannel" | "erase" | "setToWhite" | "setToBlack" | "invert" | "deepfry" | "random"}
      *
      * @default "randomColor"
      */
@@ -109,6 +123,7 @@ interface ImageCorruptorOptions {
         | "setToWhite"
         | "setToBlack"
         | "invert"
+        | "deepfry"
         | "random";
     /**
      * The format for the output image.
@@ -159,7 +174,29 @@ export const nonRandomModes = [
     "setToWhite",
     "setToBlack",
     "invert",
+    "deepfry",
 ] as const;
+
+/**
+ * Applies a contrast effect to the image data.
+ *
+ * @param {ImageData} imageData The image data.
+ * @param {number} val The value to apply, must be between 0 and 1 (inclusive).
+ * @returns {ImageData} The image data with the contrast applied.
+ *
+ * @see {@link https://stackoverflow.com/a/79557593} This is the source of this function.
+ */
+export function applyContrast(imageData: ImageData, val: number): ImageData {
+    const d = imageData.data;
+    val *= 255;
+    const factor = val === 255 ? 255 : (val + 255) / (255 - val);
+    for (let i = 0; i < d.length; i += 4) {
+        d[i + 0] = factor * (d[i + 0] - 128) + 128;
+        d[i + 1] = factor * (d[i + 1] - 128) + 128;
+        d[i + 2] = factor * (d[i + 2] - 128) + 128;
+    }
+    return imageData;
+}
 
 /**
  * Corrupts an image.
@@ -245,127 +282,74 @@ export async function corruptImage(src: string | Buffer, options: ImageCorruptor
     contextB.imageSmoothingEnabled = false;
     contextB.drawImage(srcImg, 0, 0);
 
-    for (let x = 0; x < srcImg.width; x++) {
-        for (let y = 0; y < srcImg.height; y++) {
-            /**
-             * The data of the pixel.
-             *
-             * @type {Uint8ClampedArray<ArrayBufferLike>}
-             */
-            const data: Uint8ClampedArray<ArrayBufferLike> = contextB.getImageData(x, y, 1, 1).data;
-            if ((options.ignoreEmptyPixels ?? false) && data.every((v) => v === 0)) continue;
-            if ((options.ignoreInvisiblePixels ?? false) && data[3] === 0) continue;
-            if (Math.random() >= (options.replaceChance ?? 0.1)) continue;
-            /**
-             * The mode to use.
-             *
-             * @type {typeof options.mode}
-             */
-            const newMode: typeof options.mode =
-                options.mode === "random" ? nonRandomModes[Math.floor(Math.random() * nonRandomModes.length)] : options.mode ?? "randomColor";
-            switch (newMode) {
-                case "randomColor": {
-                    const r: number = Math.floor(Math.random() * 256);
-                    const g: number = Math.floor(Math.random() * 256);
-                    const b: number = Math.floor(Math.random() * 256);
-                    context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
-                    context.clearRect(x, y, scaleX, scaleY);
-                    context.fillRect(x, y, scaleX, scaleY);
-                    break;
-                }
-                case "randomColorFullBrightness": {
-                    const r: number = Math.random() < 0.5 ? (options.useCurrentColorAsDefault ?? false ? data[0] : 0) : 255;
-                    const g: number = Math.random() < 0.5 ? (options.useCurrentColorAsDefault ?? false ? data[1] : 0) : 255;
-                    const b: number = Math.random() < 0.5 ? (options.useCurrentColorAsDefault ?? false ? data[2] : 0) : 255;
-                    context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
-                    context.clearRect(x, y, scaleX, scaleY);
-                    context.fillRect(x, y, scaleX, scaleY);
-                    break;
-                }
-                case "randomColorFullBrightnessOneChannel": {
-                    let r: number = options.useCurrentColorAsDefault ?? false ? data[0] : 0;
-                    let g: number = options.useCurrentColorAsDefault ?? false ? data[1] : 0;
-                    let b: number = options.useCurrentColorAsDefault ?? false ? data[2] : 0;
-                    switch (Math.floor(Math.random() * 3)) {
-                        case 0: {
-                            r = 255;
-                            break;
-                        }
-                        case 1: {
-                            g = 255;
-                            break;
-                        }
-                        case 2: {
-                            b = 255;
-                            break;
-                        }
+    if (options.mode === "deepfry") {
+        const imgData: ImageData = context.getImageData(0, 0, srcImg.width, srcImg.height);
+        applyContrast(imgData, 0.5);
+        context.putImageData(imgData, 0, 0);
+        for (let i = 0; i < 10; i++) {
+            const img = await loadImage(
+                canvas.toBuffer("image/jpeg", {
+                    chromaSubsampling: true,
+                    progressive: false,
+                    quality: 0.2,
+                })
+            );
+            context.drawImage(img, 0, 0);
+        }
+    } else {
+        for (let x = 0; x < srcImg.width; x++) {
+            for (let y = 0; y < srcImg.height; y++) {
+                /**
+                 * The data of the pixel.
+                 *
+                 * @type {Uint8ClampedArray<ArrayBufferLike>}
+                 */
+                const data: Uint8ClampedArray<ArrayBufferLike> = contextB.getImageData(x, y, 1, 1).data;
+                if ((options.ignoreEmptyPixels ?? false) && data.every((v) => v === 0)) continue;
+                if ((options.ignoreInvisiblePixels ?? false) && data[3] === 0) continue;
+                if (Math.random() >= (options.replaceChance ?? 0.1)) continue;
+                /**
+                 * The mode to use.
+                 *
+                 * @type {typeof options.mode}
+                 */
+                const newMode: typeof options.mode =
+                    options.mode === "random"
+                        ? nonRandomModes.filter((m) => m !== "deepfry")[Math.floor(Math.random() * (nonRandomModes.length - 1))]
+                        : options.mode ?? "randomColor";
+                switch (newMode) {
+                    case "randomColor": {
+                        const r: number = Math.floor(Math.random() * 256);
+                        const g: number = Math.floor(Math.random() * 256);
+                        const b: number = Math.floor(Math.random() * 256);
+                        context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
+                        context.clearRect(x, y, scaleX, scaleY);
+                        context.fillRect(x, y, scaleX, scaleY);
+                        break;
                     }
-                    context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
-                    context.clearRect(x, y, scaleX, scaleY);
-                    context.fillRect(x, y, scaleX, scaleY);
-                    break;
-                }
-                case "randomColorFullBrightnessOneOrTwoChannels": {
-                    let r: number = options.useCurrentColorAsDefault ?? false ? data[0] : 0;
-                    let g: number = options.useCurrentColorAsDefault ?? false ? data[1] : 0;
-                    let b: number = options.useCurrentColorAsDefault ?? false ? data[2] : 0;
-                    if (Math.random() < 0.5) {
-                        switch (Math.floor(Math.random() * 3)) {
-                            case 0: {
-                                r = 255;
-                                break;
-                            }
-                            case 1: {
-                                g = 255;
-                                break;
-                            }
-                            case 2: {
-                                b = 255;
-                                break;
-                            }
-                        }
-                    } else {
-                        switch (Math.floor(Math.random() * 3)) {
-                            case 0: {
-                                r = 255;
-                                g = 255;
-                                break;
-                            }
-                            case 1: {
-                                g = 255;
-                                b = 255;
-                                break;
-                            }
-                            case 2: {
-                                r = 255;
-                                b = 255;
-                                break;
-                            }
-                        }
+                    case "randomColorFullBrightness": {
+                        const r: number = Math.random() < 0.5 ? (options.useCurrentColorAsDefault ?? false ? data[0] : 0) : 255;
+                        const g: number = Math.random() < 0.5 ? (options.useCurrentColorAsDefault ?? false ? data[1] : 0) : 255;
+                        const b: number = Math.random() < 0.5 ? (options.useCurrentColorAsDefault ?? false ? data[2] : 0) : 255;
+                        context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
+                        context.clearRect(x, y, scaleX, scaleY);
+                        context.fillRect(x, y, scaleX, scaleY);
+                        break;
                     }
-                    context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
-                    context.clearRect(x, y, scaleX, scaleY);
-                    context.fillRect(x, y, scaleX, scaleY);
-                    break;
-                }
-                case "randomColorFullBrightnessTwoChannels":
-                    {
+                    case "randomColorFullBrightnessOneChannel": {
                         let r: number = options.useCurrentColorAsDefault ?? false ? data[0] : 0;
                         let g: number = options.useCurrentColorAsDefault ?? false ? data[1] : 0;
                         let b: number = options.useCurrentColorAsDefault ?? false ? data[2] : 0;
                         switch (Math.floor(Math.random() * 3)) {
                             case 0: {
                                 r = 255;
-                                g = 255;
                                 break;
                             }
                             case 1: {
                                 g = 255;
-                                b = 255;
                                 break;
                             }
                             case 2: {
-                                r = 255;
                                 b = 255;
                                 break;
                             }
@@ -373,56 +357,127 @@ export async function corruptImage(src: string | Buffer, options: ImageCorruptor
                         context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
                         context.clearRect(x, y, scaleX, scaleY);
                         context.fillRect(x, y, scaleX, scaleY);
+                        break;
                     }
-                    break;
-                case "randomColorFullBrightnessRedChannel": {
-                    const r: number = 255;
-                    const g: number = data[1];
-                    const b: number = data[2];
-                    context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
-                    context.clearRect(x, y, scaleX, scaleY);
-                    context.fillRect(x, y, scaleX, scaleY);
-                    break;
-                }
-                case "randomColorFullBrightnessGreenChannel": {
-                    const r: number = data[0];
-                    const g: number = 255;
-                    const b: number = data[2];
-                    context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
-                    context.clearRect(x, y, scaleX, scaleY);
-                    context.fillRect(x, y, scaleX, scaleY);
-                    break;
-                }
-                case "randomColorFullBrightnessBlueChannel": {
-                    const r: number = data[0];
-                    const g: number = data[1];
-                    const b: number = 255;
-                    context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
-                    context.clearRect(x, y, scaleX, scaleY);
-                    context.fillRect(x, y, scaleX, scaleY);
-                    break;
-                }
-                case "setToWhite": {
-                    context.fillStyle = `rgba(255,255,255,${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
-                    context.clearRect(x, y, scaleX, scaleY);
-                    context.fillRect(x, y, scaleX, scaleY);
-                    break;
-                }
-                case "setToBlack": {
-                    context.fillStyle = `rgba(0,0,0,${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
-                    context.clearRect(x, y, scaleX, scaleY);
-                    context.fillRect(x, y, scaleX, scaleY);
-                    break;
-                }
-                case "erase": {
-                    context.clearRect(x, y, scaleX, scaleY);
-                    break;
-                }
-                case "invert": {
-                    context.fillStyle = `rgba(${255 - data[0]},${255 - data[1]},${255 - data[2]},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
-                    context.clearRect(x, y, scaleX, scaleY);
-                    context.fillRect(x, y, scaleX, scaleY);
-                    break;
+                    case "randomColorFullBrightnessOneOrTwoChannels": {
+                        let r: number = options.useCurrentColorAsDefault ?? false ? data[0] : 0;
+                        let g: number = options.useCurrentColorAsDefault ?? false ? data[1] : 0;
+                        let b: number = options.useCurrentColorAsDefault ?? false ? data[2] : 0;
+                        if (Math.random() < 0.5) {
+                            switch (Math.floor(Math.random() * 3)) {
+                                case 0: {
+                                    r = 255;
+                                    break;
+                                }
+                                case 1: {
+                                    g = 255;
+                                    break;
+                                }
+                                case 2: {
+                                    b = 255;
+                                    break;
+                                }
+                            }
+                        } else {
+                            switch (Math.floor(Math.random() * 3)) {
+                                case 0: {
+                                    r = 255;
+                                    g = 255;
+                                    break;
+                                }
+                                case 1: {
+                                    g = 255;
+                                    b = 255;
+                                    break;
+                                }
+                                case 2: {
+                                    r = 255;
+                                    b = 255;
+                                    break;
+                                }
+                            }
+                        }
+                        context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
+                        context.clearRect(x, y, scaleX, scaleY);
+                        context.fillRect(x, y, scaleX, scaleY);
+                        break;
+                    }
+                    case "randomColorFullBrightnessTwoChannels":
+                        {
+                            let r: number = options.useCurrentColorAsDefault ?? false ? data[0] : 0;
+                            let g: number = options.useCurrentColorAsDefault ?? false ? data[1] : 0;
+                            let b: number = options.useCurrentColorAsDefault ?? false ? data[2] : 0;
+                            switch (Math.floor(Math.random() * 3)) {
+                                case 0: {
+                                    r = 255;
+                                    g = 255;
+                                    break;
+                                }
+                                case 1: {
+                                    g = 255;
+                                    b = 255;
+                                    break;
+                                }
+                                case 2: {
+                                    r = 255;
+                                    b = 255;
+                                    break;
+                                }
+                            }
+                            context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
+                            context.clearRect(x, y, scaleX, scaleY);
+                            context.fillRect(x, y, scaleX, scaleY);
+                        }
+                        break;
+                    case "randomColorFullBrightnessRedChannel": {
+                        const r: number = 255;
+                        const g: number = data[1];
+                        const b: number = data[2];
+                        context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
+                        context.clearRect(x, y, scaleX, scaleY);
+                        context.fillRect(x, y, scaleX, scaleY);
+                        break;
+                    }
+                    case "randomColorFullBrightnessGreenChannel": {
+                        const r: number = data[0];
+                        const g: number = 255;
+                        const b: number = data[2];
+                        context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
+                        context.clearRect(x, y, scaleX, scaleY);
+                        context.fillRect(x, y, scaleX, scaleY);
+                        break;
+                    }
+                    case "randomColorFullBrightnessBlueChannel": {
+                        const r: number = data[0];
+                        const g: number = data[1];
+                        const b: number = 255;
+                        context.fillStyle = `rgba(${r},${g},${b},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
+                        context.clearRect(x, y, scaleX, scaleY);
+                        context.fillRect(x, y, scaleX, scaleY);
+                        break;
+                    }
+                    case "setToWhite": {
+                        context.fillStyle = `rgba(255,255,255,${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
+                        context.clearRect(x, y, scaleX, scaleY);
+                        context.fillRect(x, y, scaleX, scaleY);
+                        break;
+                    }
+                    case "setToBlack": {
+                        context.fillStyle = `rgba(0,0,0,${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
+                        context.clearRect(x, y, scaleX, scaleY);
+                        context.fillRect(x, y, scaleX, scaleY);
+                        break;
+                    }
+                    case "erase": {
+                        context.clearRect(x, y, scaleX, scaleY);
+                        break;
+                    }
+                    case "invert": {
+                        context.fillStyle = `rgba(${255 - data[0]},${255 - data[1]},${255 - data[2]},${options.preserveAlpha ?? false ? data[3] / 255 : 1})`;
+                        context.clearRect(x, y, scaleX, scaleY);
+                        context.fillRect(x, y, scaleX, scaleY);
+                        break;
+                    }
                 }
             }
         }
